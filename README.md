@@ -109,13 +109,75 @@ python infer.py \
 ```
 </details>
 
-<!-- ## 🚗 Training
-By default, we train our models using 24 H20 GPUs (96 GB VRAM each). However, the models can also be trained on other GPU configurations by appropriately adjusting the batch size. Check out the script [`train.sh`](train.sh) for details. -->
+## 🚗 Training
+By default, we train our models using 24 H20 GPUs (96 GB VRAM each). However, the models can also be trained on other GPU configurations by appropriately adjusting the batch size. Our training is divided into two parts.
+
+#### 0. Data Preparation
+Our dataloader naturally supports multiple datasets; however, as each dataset has a different format, they must be standardized before training. The required data format is as follows:
+```
+|- /path/to/dataset
+    |-RealEstate10K
+        |-scene_0
+            |-images
+                |-frame00000.png
+                |-frame00001.png
+                ...
+            |-captions.txt
+            |-transforms.json
+        |-scene_1
+            |-images
+                |-frame00000.png
+                |-frame00001.png
+                ...
+            |-captions.txt
+            |-transforms.json
+        ...
+        |-train_cameras_paths.txt
+        |-train_captions_paths.txt
+        |-train_videos_dirs.txt
+    ...
+    |-Co3Dv2
+        |-scene_0
+            |-images
+                |-frame00000.png
+                |-frame00001.png
+                ...
+            |-captions.txt
+            |-transforms.json
+        ...
+        |-train_cameras_paths.txt
+        |-train_captions_paths.txt
+        |-train_videos_dirs.txt
+    |-test_cameras_paths.txt
+    |-test_captions_paths.txt
+    |-test_videos_dirs.txt
+    |-train_cameras_paths.txt
+    |-train_captions_paths.txt
+    |-train_videos_dirs.txt
+```
+For each scene, `captions.txt` stores the text prompt, and `transforms.json` follows [`nerfstudio`](https://docs.nerf.studio/quickstart/data_conventions.html#dataset-format) format, containing per-frame metadata (e.g. `w`, `h`, `file_path`, `transform_matrix`), with the only difference being that our `transform_matrix` uses OpenCV convention. 
+
+For each dataset, `train_cameras_paths.txt`, `train_captions_paths.txt` and `train_videos_dirs.txt` specify the paths to `transforms.json`, `captions.txt` and the `images` directory for the training scenes, respectively. 
+
+Additionally, under the root path, the files `test_cameras_paths.txt`, `test_captions_paths.txt` and `test_videos_dirs.txt` store the corresponding paths for all test scenes across datasets; while `train_cameras_paths.txt`, `train_captions_paths.txt` and `train_videos_dirs.txt` store those for all training scenes.
+
+#### 1. Geometry Adapter
+Run the bash script `train_geo_adapter_pl.sh` to start training the geometry adapter
+```bash
+./train_geo_adapter_pl.sh
+```
+Beforehand, please update the environment variables in the script to the correct paths for the models, datasets and outputs (e.g. `VGGT_PATH`, `WAN_VAE_PATH`, `DATASET_PATH` and `OUTPUT_DIR`).
+
+#### 2. Diffusion Model
+Run the bash script `train_dit.sh` to start training the diffusion model
+```bash
+./train_dit.sh
+```
+Before that, please update the environment variables in the script to the correct paths for the models, datasets and outputs (e.g. `WAN_PATH`, `VGGT_PATH`, `GEO_ADAPTER_PATH`, `DATASET_PATH` and `OUTPUT_DIR`).
 
 ## ✅ TODO
 - [x] Release inference code and checkpoints
-- [ ] Release online demo
-- [ ] Release training code & dataset preparation
+- [x] Release data preparation & training code
 
 ## 🎓 Citation
 Please cite our paper if you find this repository useful:
